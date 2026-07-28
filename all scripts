@@ -1,0 +1,581 @@
+1>                  /home/rajadmin/scripts/handler_error.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+#To check whether handler errors---every 3 minute
+
+ALERTGROUP="raj raj"
+ALERTKEY="Handler error alert"
+ALERT_TEXT="Inform raj Ops.Capture couple of thread dump,jstack trace and bounce the SDP/NMN Pair"
+SEVERITY=5
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+
+CMD=` grep "Caused by: java.io.FileNotFoundException:"  /app/logs/server.log | grep "(Too many open files)" `
+#echo $CMD
+
+if [[ $CMD ]]; then
+        echo "issue";
+        netcool
+else
+        echo "no issue";
+fi
+
+
+2>              /home/rajadmin/scripts/serverlog_check.sh
+
+#!/bin/bash
+#Written by Raju-raj Ops
+
+ALERTGROUP="raj raj"
+ALERTKEY="Server log not updating"
+ALERT_TEXT="Server log not updating.Contact raj Ops if it is reoccurring."
+SEVERITY=5
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+#TOMCATTIME=` TZ=":America/New_York" date '+%Y-%m-%d %H:%M' `
+TOMCATTIME=` TZ=":America/New_York" date -d '-1 minutes' '+%Y-%m-%d %H:%M' `
+LOGFILE=/app/logs/server.log
+#echo $TOMCATTIME1
+
+CMD=` grep "$TOMCATTIME" $LOGFILE `
+
+if [[ $CMD ]]; then
+        echo "Log updating";
+else
+        echo "Server log not updating.Contact raj Ops immediately";
+        netcool
+fi
+
+
+
+3>               /home/rajadmin/scripts/dbconnectcheck.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+#To check Acquisition Attempt Failed due to DB connection issue
+
+ALERTGROUP="raj raj"
+ALERTKEY="Acquisition Attempt Failed alert-DB connection failed"
+ALERT_TEXT="Inform raj Ops.Check the connectivity issue b/w SDP and DB"
+SEVERITY=5
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+lastModificationSeconds=$(date +%s -r /app/logs/catalina.out)
+currentSeconds=$(date +%s)
+elapsedSeconds=$((currentSeconds - lastModificationSeconds))
+echo $elapsedSeconds
+checktime=1800
+
+if (( elapsedSeconds < checktime ));then
+
+        CMD=` tail -n 100 /app/logs/catalina.out| grep "Acquisition Attempt Failed" `
+        if [[ $CMD ]]; then
+                echo "issue";
+                netcool
+        else
+                echo "no issue";
+        fi
+else
+echo "file is not updating for a long time"
+fi
+
+4>                  /home/rajadmin/scripts/sitecheck.sh
+
+#!/bin/bash
+#Written By:raj---raj Ops
+#Cross site check every 10 minutes
+
+
+ALERTGROUP="raj raj"
+ALERTKEY="Cross site alert"
+ALERT_TEXT="Cross site is disabled. Inform raj Ops at 813-414-4675"
+SEVERITY=4
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+crosssite=` grep SDP_IS_REDUNDANT_ENABLED /app/raj/thirdparty/apache-tomcat-9.0.10/webapps/SDPv2.0/WEB-INF/classes/HotUpdate.conf | awk -F = '{print $2}' | tr -d '\r' `
+
+case $crosssite in
+        (true) echo "Cross site enabled";;
+        (false) echo "Cross site disabled"
+                netcool;;
+        (*) echo "Cross site damaged"
+                netcool;;
+esac
+
+5>           /home/rajadmin/scripts/logrotate/catalina.conf
+
+/app/logs/catalina.out {
+    rotate 20
+    missingok
+    copytruncate
+    olddir /app/logs/backup/catalina
+    compress
+    size 1G
+}
+
+6>               /home/rajadmin/scripts/speedpass.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+#To track speed pass purchase exceptions
+
+ALERTGROUP="raj raj"
+ALERTKEY1="speed pass purchase policy hour"
+ALERTKEY2="speed pass purchase service hour"
+ALERTKEY3="speed pass purchase webservice hour"
+
+ALERT_TEXT1="PolicyException occured while sending SMS is greater than threshold in an hour.Notify raj-Ops.Ref:http://rajmachine/index.php/Total_speed_pass_purchases_by_day_-_Procedure_to_report"
+ALERT_TEXT2="ServiceException occured while sending SMS is greater than threshold in an hour.Notify raj-Ops.Ref:http://rajmachine/index.php/Total_speed_pass_purchases_by_day_-_Procedure_to_report"
+ALERT_TEXT3="WebServiceException is greater than threshold in an hour.Notify raj-Ops.Ref:http://rajmachine/index.php/Total_speed_pass_purchases_by_day_-_Procedure_to_report"
+
+SEVERITY=5
+
+netcool1 ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY1}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT1}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+netcool2 ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY2}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT2}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+netcool3 ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY3}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT3}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+
+
+filename=/app/logs/server.lo
+count1=10
+count2=20
+
+
+
+policycount=`  date="$(date '+%Y-%m-%d %H' -d '6 hour ago')" '$0~date && /PolicyException occured while sending SMS : MessageId :/' $filename* | wc -l `
+echo $policycount
+if ((policycount > count1 ));then
+        echo "Policy exception is above 10 for past hour";
+        netcool1
+else
+        echo "Policy exception not found";
+
+fi
+
+servicecount=` awk -v date="$(date '+%Y-%m-%d %H' -d '6 hour ago')" '$0~date && /ServiceException occured while sending SMS : MessageId :/' $filename* | wc -l `
+echo $servicecount
+if ((servicecount > count1 ));then
+        echo "Service exception is above 10 for past hour";
+        netcool2
+else
+        echo "Service exception not found";
+
+fi
+
+invokecount=` awk -v date="$(date '+%Y-%m-%d %H' -d '6 hour ago')" '$0~date && /invokeSmsSenderService() : Exception Occured WebServiceException/' $filename* | wc -l `
+echo $invokecount
+if ((invokecount > count2 ));thenv
+        echo "Webservice exception is above 20 past hour";
+        netcool3
+else
+        echo "Webservice exception not found";
+
+fi
+
+
+7>        cat /home/rajadmin/scripts/SMS_failure.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+#To check Sender adrajss improper SMS failures ---every 5 minute
+
+ALERTGROUP="raj raj"
+ALERTKEY="Improper SMS failure  alert"
+ALERT_TEXT="Sender Adrajss improper and need immediate attention.Inform raj Ops."
+SEVERITY=4
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+
+CMD=` grep "com.syn.raj.smsgw.smsgwhandler.SmsGwHandler - MsSmsBacklog"  /app/logs/server.log | grep "senderAdrajss :null" `
+#echo $CMD
+
+if [[ $CMD ]]; then
+        echo "issue";
+        netcool
+else
+        echo "no issue";
+fi
+
+
+
+8>          cat /home/rajadmin/scripts/http500error.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+#To check whether PxG SMS gateway failures---every 6 minutes
+
+ALERTGROUP="raj raj"
+ALERTKEY="PxG SMS gateway failed"
+ALERT_TEXT="Notify raj Ops with failure count"
+SEVERITY=5
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+
+CMD=` grep "java.io.IOException: Server returned"  /app/logs/server.log | grep "URL: https://bmpxg.raj.ca:9009/" `
+#echo $CMD
+
+if [[ $CMD ]]; then
+        echo "issue";
+        netcool
+else
+        echo "no issue";
+fi
+
+
+9>          cat /home/rajadmin/scripts/CDRcheck.sh
+#!/bin/bash
+#Written By:raj---raj Ops
+#CDR check every 15 minutes
+
+
+ALERTGROUP="raj raj"
+ALERTKEY="Archive directory"
+ALERT_TEXT="CDR not generated for past 15 minutes . Inform raj Ops at 813-414-4675"
+SEVERITY=4
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+
+
+cd /gproxy/traces/archive ;
+cfile=` ls -ltr | tail -1 | awk '{print $9}' `
+cdate=`date +"%s"`
+fdate=` date +"%s" -r "$cfile" `
+
+echo $cfile
+echo $cdate
+echo $fdate
+
+COUNT=`expr $cdate - $fdate`
+echo $COUNT;
+if [ "$COUNT" -gt 1000 ];
+then
+        echo "CDR not generated for past 15 minutes";
+        netcool
+else
+        echo "CDR generated";
+fi
+
+
+10> cat /home/rajadmin/scripts/optout_featurecode.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+
+. /app/cron/raj5/raj/scripts/db.env
+
+fromdate=`date "+%d-%b-%Y" -d '7 day ago'`
+todate=`date "+%d-%b-%Y" -d '1 day ago'`
+sdir=/home/rajadmin/scripts
+
+
+echo "$fromdate"
+echo "$todate"
+dmoutput="`sqlplus64 -s username/username123@raj-racp008:2032/raj.raj.username <<EOF
+
+set markup csv on;
+set heading on;
+spool '${sdir}/OPTOUT_Without_OPTIN.csv';
+
+select IMSI, MSISDN, CREATED_DT, NEW_FEATURE_CODE_LIST AS FEATURE_CODES from MS_PROVISION_Q where created_dt > sysdate - 8 and status=11 and trunc(created_dt) BETWEEN '$fromdate' AND '$todate' order by created_dt desc
+/
+
+spool off;
+exit;
+EOF`"
+
+sed -e '2,$!d' -e '$d' ${sdir}/OPTOUT_Without_OPTIN.csv |head -n -2 > ${sdir}/opt.tmp && mv ${sdir}/opt.tmp ${sdir}/OPTOUT_Without_OPTIN_${fromdate}_TO_${todate}.csv
+
+echo " "|mailx -s "Report of opt out requests for not opted in feature codes from ${fromdate} to ${todate}" -a "${sdir}/OPTOUT_Without_OPTIN_${fromdate}_TO_${todate}.csv" "raju.john@test.com" "charan.billinty@test.com"
+
+rm -rf ${sdir}/OPTOUT_Without_OPTIN.csv ${sdir}/OPTOUT_Without_OPTIN_${fromdate}_TO_${todate}.csv
+
+
+11>           cat /home/rajadmin/scripts/corona_impact_monthly.sh
+
+#!/bin/bash
+#Written by raj-raj Ops
+. /app/cron/raj5/raj/scripts/db.env
+
+cmmoutput="`sqlplus64 -s username/username123@raj-racp008:2032/raj.raj.username <<EOF
+
+set heading off;
+set linesize 3000;
+set pagesize 20;
+set headsep off;
+set trimspool on;
+spool corona_monthly_username.csv;
+
+select to_char(purchase_date, 'YYYY-MM'), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 50 and a.pack_type=1 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and b.cap in (101, 0, 2) group by to_char(purchase_date, 'YYYY-MM') order by to_char(purchase_date, 'YYYY-MM')
+/
+
+select to_char(purchase_date, 'YYYY-MM'), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 50 and a.pack_type=2 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and (a.rem_volume < a.volume or a.rem_balance < a.balance) group by to_char(purchase_date, 'YYYY-MM') order by to_char(purchase_date, 'YYYY-MM')
+/
+
+select to_char(purchase_date, 'YYYY-MM'), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 50 and a.pack_type=3 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and (a.rem_volume < a.volume or a.rem_balance < a.balance) group by to_char(purchase_date, 'YYYY-MM') order by to_char(purchase_date, 'YYYY-MM')
+/
+
+select to_char(creation_dt, 'YYYY-MM'), count(*) from MS_EDR_USAGE_HISTORY where trunc(creation_dt) >= sysdate - 50 group by to_char(creation_dt, 'YYYY-MM') order by to_char(creation_dt, 'YYYY-MM')
+/
+
+
+spool off;
+exit;
+EOF`"
+
+cmcoutput="`sqlplus64 -s cdr/cdr123@raj-racp008:2032/raj.raj.cdr <<EOF
+
+set heading off;
+set linesize 3000;
+set pagesize 20;
+set headsep off;
+set trimspool on;
+set numformat 9999999999999999999;
+spool corona_monthly_cdr.csv;
+
+select to_char(start_time, 'YYYY-MM'), count(distinct IMSI) from MC_GPRS_DATA_USAGE_raj where trunc(start_time) >= sysdate - 62 and (INPUT_OCTATE + OUTPUT_OCTATE + FREE_USAGE_IN_OCT + FREE_USAGE_OUT_OCT > 0) group by to_char(start_time, 'YYYY-MM') order by to_char(start_time, 'YYYY-MM')
+/
+
+select to_char(start_time, 'YYYY-MM'), sum(INPUT_OCTATE + OUTPUT_OCTATE) from MC_GPRS_DATA_USAGE_raj where trunc(start_time) >= sysdate - 62 and (INPUT_OCTATE + OUTPUT_OCTATE > 0) group by to_char(start_time, 'YYYY-MM') order by to_char(start_time, 'YYYY-MM')
+/
+
+log_file /home/rajadmin/afile
+spool off;
+exit;
+EOF`"
+
+12>             /home/rajadmin/scripts/corona_impact_daily.sh
+
+maloCHe
+
+#!/bin/bash
+#Written by raj-raj Ops
+. /app/cron/raj5/raj/scripts/db.env
+
+cdmoutput="`sqlplus64 -s username/username123@raj-racp008:2032/raj.raj.username <<EOF
+
+set heading off;
+set linesize 3000;
+set pagesize 20;
+set headsep off;
+set trimspool on;
+spool corona_daily_username.csv;
+
+select trunc(purchase_date), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 30 and a.pack_type=1 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and b.cap in (101, 0, 2) group by trunc(purchase_date) order by trunc(purchase_date)
+/
+
+select trunc(purchase_date), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 30 and a.pack_type=2 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and (a.rem_volume < a.volume or a.rem_balance < a.balance) group by trunc(purchase_date) order by trunc(purchase_date)
+/
+
+select trunc(purchase_date), count(*) from ms_pack_purchase_hist a, ms_service_definition b where trunc(purchase_date) >= sysdate - 30 and a.pack_type=3 and a.pack_id=b.pack_id and a.pack_status in (1,2,3,4) and a.pack_id not in (502191, 503191, 503192, 503193, 504191) and (a.rem_volume < a.volume or a.rem_balance < a.balance) group by trunc(purchase_date) order by trunc(purchase_date)
+/
+
+select trunc(creation_dt), count(*) from MS_EDR_USAGE_HISTORY where trunc(creation_dt) >= sysdate - 30 group by trunc(creation_dt) order by trunc(creation_dt)
+/
+
+
+spool off;
+exit;
+EOF`"
+#sed '$d'  /home/rajadmin/scripts/corona_result.csv|sed '$d'| sed '$d'
+
+cdcoutput="`sqlplus64 -s cdr/cdr123@raj-racp008:2032/raj.raj.cdr <<EOF
+
+set heading off;
+set linesize 3000;
+set pagesize 20;
+set headsep off;
+set trimspool on;
+spool corona_daily_cdr.csv;
+
+select trunc(start_time), count(distinct IMSI) from MC_GPRS_DATA_USAGE_raj where trunc(start_time) >= sysdate - 10  and (INPUT_OCTATE + OUTPUT_OCTATE + FREE_USAGE_IN_OCT + FREE_USAGE_OUT_OCT > 0) group by trunc(start_time) order by trunc(start_time)
+/
+
+select trunc(start_time), sum(INPUT_OCTATE + OUTPUT_OCTATE) from MC_GPRS_DATA_USAGE_raj where trunc(start_time) >= sysdate - 10  and (INPUT_OCTATE + OUTPUT_OCTATE > 0) group by trunc(start_time) order by trunc(start_time)
+/
+
+
+spool off;
+exit;
+EOF`"
+
+13> 		/home/rajadmin/scripts/fixduplicates.sh
+
+#!/bin/bash
+HOSTNAME=`hostname`
+dt=`date '+%Y%m%d' | tr 'a-z' 'A-Z'`
+ALERTGROUP="Daily report error"
+ALERTKEY="Daily report has older data"
+SEVERITY=5
+ALERT_TEXT="Daily report contains older data.Delete the generated files and rerun the process from cron!!! Please reach out to raj Ops"
+
+netcool ()
+{
+echo "NC_RICH_ALARM Node=${HOSTNAME}/Node AlertGroup=${ALERTGROUP}/AlertGroup AlertKey=${ALERTKEY}/AlertKey Type=1/Type Severity=${SEVERITY}/Severity Summary=${ALERT_TEXT}/Summary NOCVisible=1/NOCVisible AlrmOwnGrpContact=raj_ops@test.com/AlrmOwnGrpContact Product=raj/Product" >> /dev/tcp/10.12.7.15/7976
+}
+date1=`date "+%Y%m%d" -d '1 day ago'`
+date2=`date "+%Y-%m-%d" -d '1 day ago'`
+REPORTS_raj="/app/rajadmin/raj/reports"
+#cd /app/rajadmin/raj/reports_back_up
+filename=/app/rajadmin/raj/reports_back_up/raj_PackActivity_DLY_CANBM_${date1}_*.REP
+filename1=` echo $filename `
+
+value1=` cat $filename1| awk -F\" '{print $6}' | wc -l `
+value2=` cat $filename1| awk -F\" '{print $6}' | sort | uniq | wc -l `
+echo "$value1";
+echo "$value2";
+cmd=`cat $filename1|awk -F\" '{print $2}' | grep -v "ACTIVITY_DATE" | sort | uniq`
+if [ "$cmd" = "$date2" ];then
+
+ if (( value1 == value2 )); then
+        echo "no duplicates"
+        gpg --encrypt --recipient "ecsupport.telecom@cgi.com" ${filename1};
+        mv ${filename1}.gpg ${filename1}.pgp;
+        cp ${filename1}.pgp ${REPORTS_raj};
+ else
+        echo "found duplicates"
+        cat $filename1| awk -F\" '{print $6}' | sort | uniq -d |
+        while read line;do
+        #awk -v patt="$line" -F\" '$6=='patt' && ++f == 2 {next} {print $0;}' $filename > tmpfile && mv tmpfile $filename
+#       awk -v p="$line" 'BEGIN{FS="\""}($6=="p") && ++f == 2 {next} {print}' $filename > tmpfile && mv tmpfile $filename
+        grep $line $filename1| sed '/'"$line"'/{2,$d}'  >> tmpfile1
+        done
+ mv tmpfile1 tmp2
+ cat $filename1| awk -F\" '{print $6}' | sort | uniq -d |
+        while read line;do
+ sed '/'"$line"'/d' $filename1 > tmpfile && mv tmpfile $filename1
+ done
+ cat tmp2 >> $filename1;
+ rm -rf tmp2
+ gpg --encrypt --recipient "ecsupport.telecom@cgi.com" ${filename1}
+ mv ${filename1}.gpg ${filename1}.pgp
+ cp ${filename1}.pgp ${REPORTS_raj}
+ fi
+else
+echo "Found older data.Please delete the file and regenerate the data";
+netcool
+fi
+
+14>
+
+#!/bin/bash
+printf 'Enter the git URL\n'
+        while true; do
+        read NUM
+        URL=` echo "$NUM"| awk -F '//' '{print $2}'|awk '$0="https://oauth2:token-token@"$0' `
+        #echo $URL
+        git clone $URL
+        DIR=` echo $URL| awk -F '/' '{print $NF}'| awk -F '.git' '{print $1}' `
+        cd /nexusrm/gitconv/BMS/$DIR
+        #git checkout testbranch
+        mkdir rollback
+        cp /home/username/create_rollback_link.sh /nexusrm/gitconv/BMS/$DIR/rollback/
+        cp /home/username/readme.txt /nexusrm/gitconv/BMS/$DIR/rollback/
+        cp /home/username/install.sh /nexusrm/gitconv/BMS/$DIR/
+        git add .
+        git commit -m "added new files"
+        git push
+        break
+done
+
+
+
+#!/bin/bash
+        cat projectid.txt|tr ',' ' '| tr ']' ' '| tr '[' ' '|sed s/\'//g|sed 's/  //' >id
+        cat giturl.txt|tr ',' ' '| tr ']' ' '| tr '[' ' '|sed s/\'//g|sed 's/  //'|awk '{$1=$1};1' >url
+        paste  url id>urlandid
+        cat /home/username/push/urlandid| while read -r projecturl projectid;do
+        curl --request DELETE --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches/master"
+        curl --request POST --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches?name=master&push_access_level=40&merge_access_level=30"
+        URL=` echo "$projecturl"| awk -F '//' '{print $2}'|awk '$0="https://oauth2:token-token@"$0' `
+        #echo $URL
+        git clone $URL
+        DIR=` echo $URL| awk -F '/' '{print $NF}'| awk -F '.git' '{print $1}' `
+        cd /home/username/push/$DIR
+        git checkout master
+        #cp /home/username/create_rollback_link.sh /nexusrm/gitconv/BMS/$DIR/rollback/
+        #cp /home/username/readme.txt /nexusrm/gitconv/BMS/$DIR/rollback/
+        #cp /home/username/install.sh /nexusrm/gitconv/BMS/$DIR/
+        if [ -f ".gitlab-ci.yml" ]; then
+        echo "File exists."
+        echo $projecturl >>/home/username/push/gitpresent
+        else
+        cp /home/username/.gitlab-ci.yml /home/username/push/$DIR/
+        git add .
+        git commit -m "Added security compliances"
+        git push
+        fi
+        curl --request DELETE --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches/master"
+        curl --request POST --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches?name=master&push_access_level=0&merge_access_level=30"
+        cd /home/username/push/
+        rm -rf /home/username/push/$DIR
+        done
+
+#!/bin/bash
+        cat projectid.txt|tr ',' '\n'| tr ']' ' '| tr '[' '\n'|sed s/\'//g|sed '1d'|sed 's/ //' >id
+        cat giturl.txt|tr ',' ' '| tr ']' ' '| tr '[' ' '|sed s/\'//g|sed 's/  //'|awk '{$1=$1};1' >url
+        paste  url id>urlandid
+        cat /home/username/push/urlandid| while read -r projecturl projectid;do
+        curl --request DELETE --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches/master"
+        curl --request POST --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches?name=master&push_access_level=40&merge_access_level=30"
+        URL=` echo "$projecturl"| awk -F '//' '{print $2}'|awk '$0="https://oauth2:token-token@"$0' `
+        #echo $URL
+        git clone $URL
+        DIR=` echo $URL| awk -F '/' '{print $NF}'| awk -F '.git' '{print $1}' `
+        cd /home/username/push/$DIR
+        git checkout master
+        #cp /home/username/create_rollback_link.sh /nexusrm/gitconv/BMS/$DIR/rollback/
+        #cp /home/username/readme.txt /nexusrm/gitconv/BMS/$DIR/rollback/
+        #cp /home/username/install.sh /nexusrm/gitconv/BMS/$DIR/
+        if [ -f ".gitlab-ci.yml" ]; then
+        echo "File exists."
+        echo $projecturl >>/home/username/push/gitpresent
+        else
+        cp /home/username/.gitlab-ci.yml /home/username/push/$DIR/
+        git add .
+        git commit -m "Added security compliances"
+        git push
+        fi
+        curl --request DELETE --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches/master"
+        curl --request POST --header "PRIVATE-TOKEN: token-token" "https://gitlab.com/api/v4/projects/${projectid}/protected_branches?name=master&push_access_level=0&merge_access_level=30"
+        cd /home/username/push/
+        rm -rf /home/username/push/$DIR
+        done
