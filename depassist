@@ -1,5 +1,4 @@
 #!/bin/bash
-#Designed to help the Ops for deploying the apps-Written By Raju John
 DEPDIR=/app/dre/thirdparty/apache-tomcat-9.0.10/webapps
 SDIR=/home/dreadmin/scripts/
 PATH1=` ls -ltr ${DEPDIR}| grep -i war|  awk '{print $11}'|cut -d/ -f 1,2,3,4,5|sed -n '1p' `
